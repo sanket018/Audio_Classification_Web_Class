@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoxAI | Audio Classification</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">V</div>
+                <div>
+                    <h2>VoxAI</h2>
+                    <span>Audio Intelligence</span>
+                </div>
+            </div>
+
+            <div class="sidebar-label">WORKSPACE</div>
+            <div class="nav-item active">◉ &nbsp; Audio Classifier</div>
+            <div class="sidebar-note">
+                <span class="status-dot"></span>
+                <span>Model loaded</span>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="avatar">AI</div>
+                <div>
+                    <strong>ML Workspace</strong>
+                    <small>Local application</small>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">MACHINE LEARNING WORKSPACE</p>
+                    <h1>Audio Classification</h1>
+                </div>
+                <div class="model-badge">
+                    <span class="status-dot"></span>
+                    Model online
+                </div>
+            </header>
+
+            <section class="welcome">
+                <div>
+                    <p class="eyebrow">WELCOME TO VOXAI</p>
+                    <h2>Turn sound into <span>insight.</span></h2>
+                    <p>Record your voice or upload an audio file to run a prediction with your trained model.</p>
+                </div>
+                <div class="sound-art" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span>
+                </div>
+            </section>
+
+            <section class="workspace-grid">
+                <div class="panel recording-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">INPUT SOURCE</p>
+                            <h3>Record your voice</h3>
+                        </div>
+                        <div class="mic-icon">🎙</div>
+                    </div>
+
+                    <p class="muted">
+                        Allow microphone access, then start recording.
+                        When finished, stop and classify your audio.
+                    </p>
+
+                    <div class="recording-visual" id="recordingVisual">
+                        <div class="mic-circle">🎤</div>
+                        <div class="record-status" id="recordStatus">
+                            Ready to record
+                        </div>
+                        <div class="timer" id="timer">00:00</div>
+                        <div class="waveform" id="waveform" aria-hidden="true">
+                            <i></i><i></i><i></i><i></i><i></i>
+                            <i></i><i></i><i></i><i></i><i></i>
+                            <i></i><i></i><i></i><i></i><i></i>
+                            <i></i><i></i><i></i><i></i><i></i>
+                            <i></i><i></i><i></i><i></i><i></i>
+                        </div>
+                    </div>
+
+                    <div class="record-controls">
+                        <button type="button" class="button button-primary"
+                                id="startBtn">
+                            ● &nbsp; Start recording
+                        </button>
+                        <button type="button" class="button button-secondary"
+                                id="stopBtn" disabled>
+                            ■ &nbsp; Stop
+                        </button>
+                    </div>
+
+                    <div class="recording-preview" id="recordingPreview" hidden>
+                        <p class="preview-label">Recording preview</p>
+                        <audio id="audioPreview" controls></audio>
+                        <button type="button" class="button button-primary"
+                                id="predictRecordingBtn">
+                            Classify recording
+                        </button>
+                    </div>
+
+                    <p class="privacy-note">
+                        🔒 Audio is processed by your local Flask application.
+                    </p>
+                </div>
+
+                <div class="panel upload-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">ALTERNATIVE INPUT</p>
+                            <h3>Upload audio</h3>
+                        </div>
+                        <div class="upload-icon">↥</div>
+                    </div>
+
+                    <p class="muted">
+                        Already have a recording? Select it from your device.
+                    </p>
+
+                    <form id="audioForm" action="{{ url_for('predict') }}"
+                          method="POST" enctype="multipart/form-data">
+                        <label class="drop-zone" for="audio">
+                            <span class="upload-symbol">↑</span>
+                            <strong>Choose an audio file</strong>
+                            <span>WAV, OGG, MP3, M4A or WEBM</span>
+                            <span class="browse-label">Browse files</span>
+                        </label>
+
+                        <input type="file" id="audio" name="audio"
+                               accept=".wav,.ogg,.mp3,.m4a,.webm,audio/*"
+                               hidden>
+
+                        <p id="fileName" class="file-name">
+                            No file selected
+                        </p>
+
+                        <button type="submit" class="button button-primary"
+                                id="uploadBtn" disabled>
+                            Classify uploaded audio →
+                        </button>
+                    </form>
+
+                    <div class="upload-tip">
+                        <strong>For better results</strong>
+                        <p>Use a clear recording with minimal background noise, preferably a short sample from your dataset.</p>
+                    </div>
+                </div>
+            </section>
+
+            {% if error %}
+            <section class="result-panel error-panel">
+                <h3>⚠ Prediction could not be completed</h3>
+                <p>{{ error }}</p>
+            </section>
+            {% endif %}
+
+            {% if prediction %}
+            <section class="result-panel">
+                <div class="result-top">
+                    <div>
+                        <p class="eyebrow">ANALYSIS COMPLETE</p>
+                        <h3>Classification result</h3>
+                    </div>
+                    <span class="result-check">✓</span>
+                </div>
+
+                <div class="result-content">
+                    <div class="prediction-box">
+                        <span class="muted">Predicted class</span>
+                        <h2>{{ prediction }}</h2>
+                    </div>
+
+                    {% if confidence is not none %}
+                    <div class="confidence-box">
+                        <span class="muted">Model confidence</span>
+                        <h2>{{ confidence }}%</h2>
+                        <div class="confidence-track">
+                            <div class="confidence-fill"
+                                 style="width: {{ confidence }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <p class="disclaimer">
+                    This is a model prediction, not verified speaker identity.
+                    Confidence is not a guarantee of correctness.
+                </p>
+            </section>
+            {% endif %}
+
+            <footer>
+                VoxAI · Audio Classification Demo
+                <span>Powered by your trained ML model</span>
+            </footer>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
